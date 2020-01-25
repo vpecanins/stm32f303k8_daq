@@ -110,3 +110,56 @@ This is enough to start generating the trigger
 
   /* USER CODE END DAC1_Init 2 */
 ```
+
+# Important code generator issues
+
+Make sure when CubeMX generates initialization code, the DMA is initialized 
+before DAC1:
+
+```c
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_DAC1_Init();
+  MX_TIM6_Init();
+  MX_USART2_UART_Init();
+```
+
+The `MX_DAC1_Init();` does some changes on DMA registers too so DMA clocks must
+be initialized before.
+
+## Notice to ST developers
+
+In one ocasion CubeMX generated the following initialization code (this is outside
+USER CODE section)
+
+```c
+/* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_DAC1_Init();
+  MX_DMA_Init();
+  MX_TIM6_Init();
+```
+
+There is a BUG: DAC1 is initialized BEFORE DMA clocks are enabled, 
+so DMA configuration inside `MX_DAC1_Init();` does not work. 
+
+Workaround: Initialize DMA clocks two times:
+
+```c
+/* USER CODE BEGIN SysInit */
+  // FIXME: DMA must be initialized before DAC1_INIT because it writes DMA registers!!!
+  MX_DMA_Init(); 
+  /* USER CODE END SysInit */
+
+/* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_DAC1_Init();
+  MX_DMA_Init();
+  MX_TIM6_Init();
+```
+
+Sometimes CubeMX produces the correct order, sometimes not.
+
