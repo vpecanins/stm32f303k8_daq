@@ -57,3 +57,56 @@ This is just a write down so I can remember the steps later.
 
 - No need to change settings on CubeMX
 
+
+# Configuration of peripherals NOT done by CubeMX
+
+Add user code between USER CODE BEGIN / USER CODE END tags
+
+## Define DAC buffer
+
+```c
+/* USER CODE BEGIN PD */
+#define DAC_BUF_LEN 16
+/* USER CODE END PD */
+
+/* USER CODE BEGIN PV */
+__attribute__((aligned (16))) uint16_t dac_buf [DAC_BUF_LEN] = {
+		0x0400, 0x0200, 0x0400, 0x0600, 0x0800, 0x0A00, 0x0C00, 0x0E00,
+		0x0F00, 0x0E00, 0x0C00, 0x0A00, 0x0800, 0x0600, 0x0400, 0x0200} ;
+/* USER CODE END PV */
+```
+
+## TIM6
+
+This is enough to start generating the trigger
+
+```c
+  /* USER CODE BEGIN TIM6_Init 2 */
+  LL_TIM_EnableCounter(TIM6);
+  /* USER CODE END TIM6_Init 2 */
+```
+
+## DAC
+```c
+  /* USER CODE BEGIN DAC1_Init 1 */
+
+  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_3,
+  		(uint32_t)dac_buf,
+			LL_DAC_DMA_GetRegAddr(DAC1,LL_DAC_CHANNEL_1, LL_DAC_DMA_REG_DATA_12BITS_RIGHT_ALIGNED),
+			LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, DAC_BUF_LEN);
+
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
+  /* USER CODE END DAC1_Init 1 */
+  
+```
+
+```c
+  /* USER CODE BEGIN DAC1_Init 2 */
+
+	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+	LL_DAC_EnableDMAReq(DAC1, LL_DAC_CHANNEL_1);
+
+  /* USER CODE END DAC1_Init 2 */
+```

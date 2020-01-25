@@ -33,6 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DAC_BUF_LEN 16
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +44,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+__attribute__((aligned (16))) uint16_t dac_buf [DAC_BUF_LEN] = {
+		0x0100, 0x0200, 0x0400, 0x0600, 0x0800, 0x0A00, 0x0C00, 0x0E00,
+		0x0F00, 0x0E00, 0x0C00, 0x0A00, 0x0800, 0x0600, 0x0400, 0x0200} ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -208,7 +211,14 @@ static void MX_DAC1_Init(void)
   LL_SYSCFG_SetRemapDMA_DAC(LL_SYSCFG_DAC1_CH1_RMP_DMA1_CH3);
 
   /* USER CODE BEGIN DAC1_Init 1 */
+  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_3,
+    		(uint32_t)dac_buf,
+  			LL_DAC_DMA_GetRegAddr(DAC1,LL_DAC_CHANNEL_1, LL_DAC_DMA_REG_DATA_12BITS_RIGHT_ALIGNED),
+  			LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, DAC_BUF_LEN);
+
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
   /* USER CODE END DAC1_Init 1 */
   /** DAC channel OUT1 config 
   */
@@ -218,7 +228,8 @@ static void MX_DAC1_Init(void)
   LL_DAC_Init(DAC1, LL_DAC_CHANNEL_1, &DAC_InitStruct);
   LL_DAC_EnableTrigger(DAC1, LL_DAC_CHANNEL_1);
   /* USER CODE BEGIN DAC1_Init 2 */
-
+	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+	LL_DAC_EnableDMAReq(DAC1, LL_DAC_CHANNEL_1);
   /* USER CODE END DAC1_Init 2 */
 
 }
@@ -251,7 +262,7 @@ static void MX_TIM6_Init(void)
   LL_TIM_SetTriggerOutput(TIM6, LL_TIM_TRGO_UPDATE);
   LL_TIM_DisableMasterSlaveMode(TIM6);
   /* USER CODE BEGIN TIM6_Init 2 */
-
+  LL_TIM_EnableCounter(TIM6);
   /* USER CODE END TIM6_Init 2 */
 
 }
