@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DAC_BUF_LEN 16
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,9 +44,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-__attribute__((aligned (16))) uint16_t dac_buf [DAC_BUF_LEN] = {
-		0x0100, 0x0200, 0x0400, 0x0600, 0x0800, 0x0A00, 0x0C00, 0x0E00,
-		0x0F00, 0x0E00, 0x0C00, 0x0A00, 0x0800, 0x0600, 0x0400, 0x0200} ;
+__attribute__((aligned (16))) uint16_t dac_buf0 [DAC_BUF_LEN] = {0};
+__attribute__((aligned (16))) uint16_t dac_buf1 [DAC_BUF_LEN] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -106,6 +105,9 @@ int main(void)
   MX_TIM6_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  uint32_t samplerate = LL_RCC_GetTIMClockFreq( LL_RCC_GetTIMClockSource(TIM6) ) /
+  		(LL_TIM_GetAutoReload(TIM6) + 1) / (LL_TIM_GetPrescaler(TIM6) + 1);
 
   /* USER CODE END 2 */
 
@@ -212,13 +214,16 @@ static void MX_DAC1_Init(void)
 
   /* USER CODE BEGIN DAC1_Init 1 */
   LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_3,
-    		(uint32_t)dac_buf,
+    		(uint32_t)dac_buf0,
   			LL_DAC_DMA_GetRegAddr(DAC1,LL_DAC_CHANNEL_1, LL_DAC_DMA_REG_DATA_12BITS_RIGHT_ALIGNED),
   			LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
 	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, DAC_BUF_LEN);
 
 	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
+
+	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
+
   /* USER CODE END DAC1_Init 1 */
   /** DAC channel OUT1 config 
   */
@@ -254,7 +259,7 @@ static void MX_TIM6_Init(void)
   /* USER CODE BEGIN TIM6_Init 1 */
 
   /* USER CODE END TIM6_Init 1 */
-  TIM_InitStruct.Prescaler = 1;
+  TIM_InitStruct.Prescaler = 6;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
   TIM_InitStruct.Autoreload = 49;
   LL_TIM_Init(TIM6, &TIM_InitStruct);
@@ -343,10 +348,23 @@ static void MX_DMA_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOF);
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+
+  /**/
+  LL_GPIO_ResetOutputPin(LD3_GPIO_Port, LD3_Pin);
+
+  /**/
+  GPIO_InitStruct.Pin = LD3_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
 
 }
 

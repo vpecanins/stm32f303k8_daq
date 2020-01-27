@@ -23,6 +23,7 @@
 #include "stm32f3xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,12 +43,22 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+extern uint16_t dac_buf0 [];
+extern uint16_t dac_buf1 [];
+
+static uint32_t half=0;
+static uint16_t phase=0;
+static uint16_t phase2=2000;
+static uint16_t freq=100;
+static uint16_t f_max=10000;
+static uint16_t f_min=10;
+static int16_t  finc=1;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+static inline int16_t fcn();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -203,7 +214,40 @@ void SysTick_Handler(void)
 void DMA1_Channel3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+	if (LL_DMA_IsActiveFlag_TC3(DMA1)) {
+		LL_DMA_ClearFlag_GI3(DMA1);
+		LL_DMA_ClearFlag_TC3(DMA1);
 
+		if (half) {
+			half=0;
+
+			LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t) dac_buf0);
+
+			for (uint32_t i=0; i<DAC_BUF_LEN; i++) {
+				dac_buf1[i] = ((int32_t) 0x8000 + fcn(phase) )>>4;
+			}
+
+		} else {
+			half=1;
+
+			LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t) dac_buf1);
+
+			for (uint32_t i=0; i<DAC_BUF_LEN; i++) {
+				dac_buf0[i] = ((int32_t) 0x8000 + fcn(phase) )>>4;
+			}
+		}
+
+		freq = freq + finc*4;
+
+		if (freq > f_max) {
+			freq = 2 * f_max - freq;
+			finc = -1;
+		} else if (freq < f_min) {
+			freq = 2 * f_min - freq;
+			finc = +1;
+		}
+
+	}
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
@@ -212,6 +256,12 @@ void DMA1_Channel3_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+static inline int16_t fcn()
+{
+	int16_t result = (arm_sin_q15(phase>>1) >> 1) + (arm_sin_q15(phase2>>1) >> 3) ;
+	phase = phase + freq;
+	phase2 = phase2 + 4*(freq);
+	return result;
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

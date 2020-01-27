@@ -63,7 +63,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#define DAC_BUF_LEN 256
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -84,6 +84,8 @@ void Error_Handler(void);
 #define SWCLK_GPIO_Port GPIOA
 #define VCP_RX_Pin LL_GPIO_PIN_15
 #define VCP_RX_GPIO_Port GPIOA
+#define LD3_Pin LL_GPIO_PIN_3
+#define LD3_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */
