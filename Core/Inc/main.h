@@ -63,7 +63,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define DAC_BUF_LEN 256
+#define DAC_BUF_LEN 2048
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

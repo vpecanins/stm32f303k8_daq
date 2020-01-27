@@ -46,6 +46,9 @@
 /* USER CODE BEGIN PV */
 __attribute__((aligned (16))) uint16_t dac_buf0 [DAC_BUF_LEN] = {0};
 __attribute__((aligned (16))) uint16_t dac_buf1 [DAC_BUF_LEN] = {0};
+
+uint32_t samplerate;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,6 +58,7 @@ static void MX_DMA_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -104,9 +108,14 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM6_Init();
   MX_USART2_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  uint32_t samplerate = LL_RCC_GetTIMClockFreq( LL_RCC_GetTIMClockSource(TIM6) ) /
+  /* Condition for glitch-free:
+   * tim_cnt/64 < DAC_BUF_LEN*1000000/samplerate
+   */
+
+  samplerate = LL_RCC_GetTIMClockFreq( LL_RCC_GetTIMClockSource(TIM6) ) /
   		(LL_TIM_GetAutoReload(TIM6) + 1) / (LL_TIM_GetPrescaler(TIM6) + 1);
 
   /* USER CODE END 2 */
@@ -236,6 +245,41 @@ static void MX_DAC1_Init(void)
 	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
 	LL_DAC_EnableDMAReq(DAC1, LL_DAC_CHANNEL_1);
   /* USER CODE END DAC1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  LL_TIM_InitTypeDef TIM_InitStruct = {0};
+
+  /* Peripheral clock enable */
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  TIM_InitStruct.Prescaler = 0;
+  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+  TIM_InitStruct.Autoreload = 0xFFFFFFFF;
+  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+  LL_TIM_Init(TIM2, &TIM_InitStruct);
+  LL_TIM_DisableARRPreload(TIM2);
+  LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
+  LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
+  LL_TIM_DisableMasterSlaveMode(TIM2);
+  /* USER CODE BEGIN TIM2_Init 2 */
+  LL_TIM_EnableCounter(TIM2);
+  /* USER CODE END TIM2_Init 2 */
 
 }
 

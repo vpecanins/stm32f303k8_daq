@@ -54,6 +54,8 @@ static uint16_t f_max=10000;
 static uint16_t f_min=10;
 static int16_t  finc=1;
 
+uint32_t tim_cnt=0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -218,6 +220,8 @@ void DMA1_Channel3_IRQHandler(void)
 		LL_DMA_ClearFlag_GI3(DMA1);
 		LL_DMA_ClearFlag_TC3(DMA1);
 
+		LL_TIM_SetCounter(TIM2, 0);
+
 		if (half) {
 			half=0;
 
@@ -247,6 +251,8 @@ void DMA1_Channel3_IRQHandler(void)
 			finc = +1;
 		}
 
+		tim_cnt = LL_TIM_GetCounter(TIM2);
+
 	}
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   
@@ -260,7 +266,7 @@ static inline int16_t fcn()
 {
 	int16_t result = (arm_sin_q15(phase>>1) >> 1) + (arm_sin_q15(phase2>>1) >> 3) ;
 	phase = phase + freq;
-	phase2 = phase2 + 4*(freq);
+	phase2 = phase2 + 4*(freq) + 1;
 	return result;
 }
 /* USER CODE END 1 */
