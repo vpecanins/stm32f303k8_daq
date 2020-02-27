@@ -28,8 +28,10 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f3xx_ll_adc.h"
 #include "stm32f3xx_ll_dac.h"
 #include "stm32f3xx_ll_dma.h"
+#include "stm32f3xx_ll_opamp.h"
 #include "stm32f3xx_ll_rcc.h"
 #include "stm32f3xx_ll_bus.h"
 #include "stm32f3xx_ll_system.h"
@@ -58,12 +60,24 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern uint16_t dac_buf0 [];
+extern uint16_t dac_buf1 [];
+extern uint16_t adc_buf [];
+extern uint32_t convdone;
+
+extern uint32_t adc_enabled;
+extern uint32_t dac_enabled;
+extern uint32_t adc_enable_req;
+extern uint32_t dac_enable_req;
+extern uint32_t adc_disable_req;
+extern uint32_t dac_disable_req;
 
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define DAC_BUF_LEN 2048
+#define ADC_BUF_LEN 512
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

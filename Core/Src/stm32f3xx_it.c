@@ -43,13 +43,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern uint16_t dac_buf0 [];
-extern uint16_t dac_buf1 [];
+
 
 static uint32_t half=0;
 static uint16_t phase=0;
 static uint16_t phase2=2000;
-static uint16_t freq=100;
+static uint16_t freq=5000;
 static uint16_t f_max=10000;
 static uint16_t f_min=10;
 static int16_t  finc=1;
@@ -211,6 +210,25 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles DMA1 channel1 global interrupt.
+  */
+void DMA1_Channel1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+	if (LL_DMA_IsActiveFlag_TC1(DMA1)) {
+			LL_GPIO_ResetOutputPin(LD3_GPIO_Port, LD3_Pin);
+			LL_DMA_ClearFlag_GI1(DMA1);
+			LL_DMA_ClearFlag_TC1(DMA1);
+			convdone = 1;
+		}
+  /* USER CODE END DMA1_Channel1_IRQn 0 */
+  
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel1_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 channel3 global interrupt.
   */
 void DMA1_Channel3_IRQHandler(void)
@@ -240,7 +258,7 @@ void DMA1_Channel3_IRQHandler(void)
 				dac_buf0[i] = ((int32_t) 0x8000 + fcn(phase) )>>4;
 			}
 		}
-
+/*
 		freq = freq + finc*4;
 
 		if (freq > f_max) {
@@ -250,7 +268,7 @@ void DMA1_Channel3_IRQHandler(void)
 			freq = 2 * f_min - freq;
 			finc = +1;
 		}
-
+*/
 		tim_cnt = LL_TIM_GetCounter(TIM2);
 
 	}
@@ -261,10 +279,39 @@ void DMA1_Channel3_IRQHandler(void)
   /* USER CODE END DMA1_Channel3_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USART2 global interrupt / USART2 wake-up interrupt through EXT line 26.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+	if (LL_USART_IsActiveFlag_RXNE(USART2)) {
+		char c = LL_USART_ReceiveData8(USART2);
+
+		if (c == 'a') {
+			if (adc_enabled == 0) {
+				adc_enable_req = 1;
+			} else {
+				adc_disable_req = 1;
+			}
+		} else if (c == 'd') {
+			if (dac_enabled == 0) {
+				dac_enable_req = 1;
+			} else {
+				dac_disable_req = 1;
+			}
+		}
+	}
+  /* USER CODE END USART2_IRQn 0 */
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 static inline int16_t fcn()
 {
-	int16_t result = (arm_sin_q15(phase>>1) >> 1) + (arm_sin_q15(phase2>>1) >> 3) ;
+	int16_t result = (arm_sin_q15(phase>>1) >> 1) /*+ (arm_sin_q15(phase2>>1) >> 3)*/ ;
 	phase = phase + freq;
 	phase2 = phase2 + 4*(freq) + 1;
 	return result;
