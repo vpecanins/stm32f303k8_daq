@@ -6,10 +6,13 @@ This is just a write down so I can remember the steps later.
 # NOTE
 
 STM32F303x8 has only 1 DMA controller: ADC & DAC share the same bus. So when ADC & DAC
-are used at the same time, sample rates are lower, incorrect. Especially in the ADC, even if the priority of the ADC ISR is higher than the DAC request.
+are used at the same time, sample rates are lower than expected, giving somewhat unpredictable results.
+This is especially true in the ADC, even if the priority of the ADC ISR is higher than the DAC request.
+
+The DAC seems to be unaffected if the ADC is running at the same time.
 
 Bigger micros of the STM32F303 series have two independent DMAs to use ADC & DAC
-at the same time without penalty.
+simultaneously without penalty.
 
 - Toggle ADC active / inactive: send 'a' to UART
 - Toggle DAC active / inactive: send 'd' to UART
@@ -25,19 +28,19 @@ at the same time without penalty.
 
 # Peripherals used
 - TIM6 basic timer generates trigger for DAC1
-- DAC1 Ch1 on STM32 _PA4_ pin, NUCLEO label _A3_.
+- DAC1 Ch1 on pin STM32-PA4 = NUCLEO-A3.
 - DAC1 receives trigger from TIM6 and generates DMA request
 - DMA1 Ch3 gets request from DAC1 each sample
 - DMA1 fetches data from SRAM and delivers to DAC1
 
-- ADC1 Ch4 on STM32 _PA3_ pin, NUCLEO label _A2_
+- ADC1 Ch4 on pin STM32-PA3 = NUCLEO-A2
 - DMA1 Ch1 gets samples from ADC as they are available
 
 - OPAMP2 mode FOLLOWER as driver for the ADC input.
-- OPAMP2 input STM32 pin _PA7_ NUCLEO label _A6_
-- OPAMP2 output STM32 pin _PA6_ NUCLEO label _A5_
-- You should REMOVE SB16 & SB18 from NUCLEO-F303K8 to allow use of _PA6_(_A5_)
-- You should CONNECT MANUALLY NUCLEO label _A5_ (opamp out) with NUCLEO label _A2_ (ADC in)
+- OPAMP2 input pin STM32-PA7 = NUCLEO-A6
+- OPAMP2 output pin STM32-PA6 = NUCLEO-A5
+- You should REMOVE SB16 & SB18 from NUCLEO-F303K8 to allow use of STM32-PA6 = NUCLEO-A5
+- You should CONNECT MANUALLY pin NUCLEO-A5 (opamp out) with pin NUCLEO-A2 (ADC in)
 
 # CubeMX configuration
 
@@ -103,7 +106,7 @@ Note: Sample rate = Clock / ADCPrescaler / (TSampl+TSar) = 64MHz / 16 / (19.5+12
 
 ## OPAMP2
 
-- Mode FOLLOWER: PA7 = in, PA6 = out
+- Mode FOLLOWER: STM32-PA7 = in, STM32-PA6 = out
 
 # Configuration of peripherals NOT done by CubeMX
 
